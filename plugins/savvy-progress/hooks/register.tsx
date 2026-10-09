@@ -892,8 +892,6 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    const summary = `≈${fmtCost(t.cost)}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
-
     // Use text rows on every surface so the pane content stays selectable.
     const cols = Math.max(24, e.props.bodyColumns || 40)
     const barW = Math.max(6, Math.min(20, cols - 34))
