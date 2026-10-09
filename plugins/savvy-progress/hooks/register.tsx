@@ -892,7 +892,125 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    // Use text rows on every surface so the pane content stays selectable.
+    if (e.surface === 'desktop') {
+      const cols = Math.max(36, e.props.bodyColumns || 40)
+      const tileW = Math.max(14, Math.floor((cols - 2) / 3))
+      const summaryTile = (key: string, label: string, value: string) => (
+        <Box key={key} flexDirection="column" borderStyle="round" borderColor="#3a3a36" paddingX={1} width={tileW} minHeight={4}>
+          <Text dimColor selectable wrap="truncate-end">
+            {label}
+          </Text>
+          <Text bold selectable wrap="truncate-end">
+            {value}
+          </Text>
+        </Box>
+      )
+      const desktopRow = (a: AgentRun) => {
+        const tier = tierOf(a.type)
+        const color = colorOf(tier)
+        const ctx = ctxOf(a)
+        const progress = progressOf(a)
+        const model = a.effort ? `${modelName(a.model)} · ${a.effort}` : modelName(a.model)
+        const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ` · ${a.stepNote}` : ''}` : ''
+        const statusColor = a.status === 'failed' ? 'red' : a.status === 'done' ? 'green' : color
+        return (
+          <Box key={a.id} flexDirection="column" borderStyle="round" borderColor="#2f2f2b" paddingX={1} paddingY={0} marginBottom={1}>
+            <Box flexDirection="row" justifyContent="space-between">
+              <Box flexDirection="row" gap={1} flexGrow={1}>
+                <Text color={color}>▣</Text>
+                <Text bold selectable wrap="truncate-end">
+                  {a.description || a.type}
+                </Text>
+              </Box>
+              <Text color={statusColor}>{STATUS_GLYPH[a.status]}</Text>
+            </Box>
+            <Text dimColor selectable wrap="truncate-end">
+              {'  '}
+              {tier === 'other' ? a.type : tier} · {model}
+              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
+            </Text>
+            {steps ? (
+              <Text selectable wrap="truncate-end">
+                {'  '}
+                {steps}
+              </Text>
+            ) : null}
+            <Box flexDirection="row">
+              <Text color={progress === null ? undefined : color}>{ctxBar((progress ?? ctx / 100) * 100, Math.max(10, Math.min(28, cols - 26)))}</Text>
+              <Text dimColor selectable wrap="truncate-end">
+                {' '}
+                ctx {ctx}% · {fmtTokens(a.contextTokens)} ≈{fmtCost(a.costUsd)} {fmtTime(elapsed(a, at))}
+              </Text>
+            </Box>
+          </Box>
+        )
+      }
+
+      return (
+        <Box flexDirection="column">
+          <Box flexDirection="row" justifyContent="space-between">
+            <Text bold selectable wrap="truncate-end">
+              {title}
+            </Text>
+            {toggleCompact}
+          </Box>
+          <Box flexDirection="row" gap={1} marginTop={1}>
+            {summaryTile('cost', s.cost, '≈' + fmtCost(t.cost))}
+            {summaryTile('tokens', s.tokens, fmtTokens(t.tokens))}
+            {summaryTile('time', s.time, fmtTime(t.time))}
+          </Box>
+          {p.isCompact ? (
+            <Box borderStyle="round" borderColor="#2f2f2b" paddingX={1} marginTop={1}>
+              <Text wrap="truncate-end">
+                {[...running, ...finished].map(a => (
+                  <Text key={a.id} color={colorOf(tierOf(a.type))}>
+                    {STATUS_GLYPH[a.status]}{' '}
+                  </Text>
+                ))}
+                {planned.map(pl => (
+                  <Text key={`plan-${pl.n}`} dimColor>
+                    ◷{' '}
+                  </Text>
+                ))}
+              </Text>
+            </Box>
+          ) : (
+            <Box flexDirection="column" marginTop={1}>
+              {isEmpty && <Text dimColor selectable>{s.empty}</Text>}
+              {running.length > 0 && (
+                <Text dimColor selectable>
+                  {s.running} · {running.length}
+                </Text>
+              )}
+              {running.map(desktopRow)}
+              {finished.length > 0 && toggleDone}
+              {!p.isDoneCollapsed && finished.map(desktopRow)}
+              {planned.length > 0 && (
+                <Text dimColor selectable>
+                  {s.planned} · {planned.length}
+                </Text>
+              )}
+              {planned.map(pl => {
+                const tier = pl.tier in TIER_COLOR ? pl.tier : 'other'
+                return (
+                  <Box key={`plan-${pl.n}`} flexDirection="column" borderStyle="round" borderColor="#2f2f2b" paddingX={1} marginBottom={1}>
+                    <Text selectable wrap="truncate-end">
+                      <Text color={colorOf(tier)}>▢</Text> {pl.n}. {pl.title} ◷
+                    </Text>
+                    <Text dimColor selectable wrap="truncate-end">
+                      {'  '}
+                      {tier} · {TIER_MODEL[tier] ?? ''}
+                      {pl.after.length ? ` · ${s.after} ${pl.after.join(', ')}` : ''}
+                    </Text>
+                  </Box>
+                )
+              })}
+            </Box>
+          )}
+        </Box>
+      )
+    }
+
     const cols = Math.max(24, e.props.bodyColumns || 40)
     const barW = Math.max(6, Math.min(20, cols - 34))
     const row = (a: AgentRun) => {
