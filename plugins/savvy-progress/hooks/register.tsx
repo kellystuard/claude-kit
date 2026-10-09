@@ -377,6 +377,7 @@ const totals = (list: AgentRun[], at: number) => {
 // --- desktop drawings: each row is one SVG, as the band above the prompt is.
 
 const PANE_CSS = `<style>
+:root{color-scheme:light dark}
 .t{fill:#1f1f1f}.s{fill:#6b6b68}.m{fill:#9a9a96}.k{fill:#ecebe8}.ln{stroke:#e4e4e1}.tile{fill:#f4f3f0}
 @media (prefers-color-scheme: dark){.t{fill:#ececec}.s{fill:#a8a8a4}.m{fill:#7d7d79}.k{fill:#2c2c2b}.ln{stroke:#333331}.tile{fill:#262625}}
 .live{animation:p 1.6s ease-in-out infinite}@keyframes p{50%{opacity:.3}}
